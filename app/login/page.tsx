@@ -1,13 +1,24 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { login } from '@/app/actions/auth'
 import { motion } from 'framer-motion'
 
+export const dynamic = 'force-dynamic'
+
 export default function LoginPage() {
+  const [verificationSent, setVerificationSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    // Check if verification was just sent
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('verification_sent') === 'true') {
+      setVerificationSent(true)
+    }
+  }, [])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -49,14 +60,36 @@ export default function LoginPage() {
             <p className="text-sm text-arcane-400 uppercase tracking-widest">Welcome back, adventurer</p>
           </Link>
 
+          {/* Success Message */}
+          {verificationSent && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-4 bg-emerald-500/20 border border-emerald-500/50 rounded-lg text-emerald-300 text-sm"
+            >
+              ✅ Verification email sent! Check your inbox to confirm your email address.
+            </motion.div>
+          )}
+
           {/* Error Message */}
           {error && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-lg text-red-300 text-sm"
+              className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-lg text-red-300 text-sm space-y-2"
             >
-              {error}
+              <p className="font-semibold">⚠️ {error}</p>
+              {error.toLowerCase().includes('email') && error.toLowerCase().includes('not') && (
+                <div className="text-xs mt-2 pt-2 border-t border-red-500/30 space-y-1">
+                  <p>📧 Check your email for a confirmation link</p>
+                  <p>💡 If you don't see it, check your spam folder</p>
+                  <p className="mt-2">
+                    <Link href="/resend-verification" className="text-arcane-300 hover:text-arcane-200 underline">
+                      Resend verification email →
+                    </Link>
+                  </p>
+                </div>
+              )}
             </motion.div>
           )}
 

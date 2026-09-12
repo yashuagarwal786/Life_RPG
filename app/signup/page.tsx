@@ -4,6 +4,9 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { signup } from '@/app/actions/auth'
 import { motion } from 'framer-motion'
+import { useRouter } from 'next/navigation'
+
+export const dynamic = 'force-dynamic'
 
 const CLASSES = [
   {
@@ -37,9 +40,11 @@ const CLASSES = [
 ]
 
 export default function SignupPage() {
+  const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [selectedClass, setSelectedClass] = useState<string>('warrior')
+  const [verificationSent, setVerificationSent] = useState(false)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -53,6 +58,13 @@ export default function SignupPage() {
       const result = await signup(formData)
       if (result?.error) {
         setError(result.error)
+      } else {
+        // Signup successful - show verification message
+        setVerificationSent(true)
+        // Auto-redirect after 3 seconds or user can click link
+        setTimeout(() => {
+          router.push('/login?verification_sent=true')
+        }, 3000)
       }
     } catch (err) {
       setError('An unexpected error occurred')
@@ -84,6 +96,27 @@ export default function SignupPage() {
             </p>
           </Link>
 
+          {/* Verification Sent Message */}
+          {verificationSent && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-6 bg-emerald-500/20 border border-emerald-500/50 rounded-lg text-emerald-300 text-center space-y-3"
+            >
+              <div className="text-3xl">✅</div>
+              <p className="font-semibold text-lg">Account Created!</p>
+              <p className="text-sm">
+                Check your email for a verification link. Click it to confirm your account and start your adventure.
+              </p>
+              <p className="text-xs mt-2">
+                Didn't receive it?{' '}
+                <Link href="/resend-verification" className="text-arcane-300 hover:text-arcane-200 underline font-semibold">
+                  Resend email →
+                </Link>
+              </p>
+            </motion.div>
+          )}
+
           {/* Error Message */}
           {error && (
             <motion.div
@@ -96,7 +129,8 @@ export default function SignupPage() {
           )}
 
           {/* Signup Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          {!verificationSent && (
+            <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email */}
             <div>
               <label className="block text-sm font-semibold text-parchment-100 mb-2">
@@ -174,25 +208,30 @@ export default function SignupPage() {
             >
               {loading ? 'Creating Account...' : 'Begin Your Adventure'}
             </button>
-          </form>
+            </form>
+          )}
 
           {/* Divider */}
-          <div className="my-6 flex items-center gap-4">
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-arcane-500/30 to-transparent"></div>
-            <span className="text-xs text-parchment-600 uppercase tracking-widest">Or</span>
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-arcane-500/30 to-transparent"></div>
-          </div>
+          {!verificationSent && (
+            <>
+              <div className="my-6 flex items-center gap-4">
+                <div className="flex-1 h-px bg-gradient-to-r from-transparent via-arcane-500/30 to-transparent"></div>
+                <span className="text-xs text-parchment-600 uppercase tracking-widest">Or</span>
+                <div className="flex-1 h-px bg-gradient-to-r from-transparent via-arcane-500/30 to-transparent"></div>
+              </div>
 
-          {/* Login Link */}
-          <p className="text-center text-parchment-300 text-sm">
-            Already have an account?{' '}
-            <Link
-              href="/login"
-              className="font-semibold text-arcane-400 hover:text-arcane-300 transition"
-            >
-              Log in here
-            </Link>
-          </p>
+              {/* Login Link */}
+              <p className="text-center text-parchment-300 text-sm">
+                Already have an account?{' '}
+                <Link
+                  href="/login"
+                  className="font-semibold text-arcane-400 hover:text-arcane-300 transition"
+                >
+                  Log in here
+                </Link>
+              </p>
+            </>
+          )}
         </div>
 
         {/* Back to Home */}

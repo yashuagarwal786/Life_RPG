@@ -22,7 +22,7 @@ export async function signup(formData: FormData) {
 
   const { email, password, username, avatar_class } = result.data
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -34,8 +34,10 @@ export async function signup(formData: FormData) {
     return { error: error.message }
   }
 
+  // Don't redirect - let the client show verification message
+  // User needs to verify email first
   revalidatePath('/', 'layout')
-  redirect('/dashboard')
+  return { success: true, message: 'Check your email to verify your account' }
 }
 
 export async function login(formData: FormData) {
